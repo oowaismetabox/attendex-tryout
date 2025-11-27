@@ -1,9 +1,9 @@
 // lib/auth.ts
 import { supabase } from "./supabase";
 
+// ------------------ LOGIN ------------------
 export async function signIn(email: string, password: string) {
   try {
-    // Check if credentials exist in allowedpeople table
     const { data, error } = await supabase
       .from("allowedpeople")
       .select("*")
@@ -12,25 +12,43 @@ export async function signIn(email: string, password: string) {
       .single();
 
     if (error || !data) {
-      return { success: false, message: "Invalid credentials" };
+      return { success: false, message: "Invalid email or password" };
     }
 
-    // Store session in localStorage
-    localStorage.setItem("userSession", JSON.stringify({ email, loggedIn: true }));
+    // Save session
+    localStorage.setItem(
+      "userSession",
+      JSON.stringify({ email, loggedIn: true })
+    );
+
     return { success: true, message: "Login successful" };
   } catch (error) {
-    return { success: false, message: "An error occurred during login" };
+    return { success: false, message: "Login error occurred" };
   }
 }
 
+// ------------------ SIGNUP ------------------
 export async function signUp(email: string, password: string, accessCode: string) {
   try {
-    // Verify access code
-    if (accessCode !== "metabox123") {
+    // 1. Get access code from DB - use .single() instead of .limit(1)
+    const { data: access, error: accessError } = await supabase
+      .from("accesscode")
+      .select("code")
+      .single();
+
+    if (accessError || !access) {
+      console.error("Access code error:", accessError);
+      return { success: false, message: "Access code not configured" };
+    }
+
+    const requiredCode = access.code;
+
+    // 2. Compare provided code
+    if (accessCode.trim() !== requiredCode.trim()) {
       return { success: false, message: "Invalid access code" };
     }
 
-    // Check if email already exists
+    // 3. Check if email already exists
     const { data: existing } = await supabase
       .from("allowedpeople")
       .select("email")
@@ -38,26 +56,32 @@ export async function signUp(email: string, password: string, accessCode: string
       .single();
 
     if (existing) {
-      return { success: false, message: "Email already registered" };
+      return { success: false, message: "Email is already registered" };
     }
 
-    // Insert new user
+    // 4. Insert user
     const { error } = await supabase
       .from("allowedpeople")
       .insert({ email, password });
 
     if (error) {
-      return { success: false, message: `Registration failed: ${error.message}` };
+      return { success: false, message: "Registration failed" };
     }
 
-    // Auto-login after signup
-    localStorage.setItem("userSession", JSON.stringify({ email, loggedIn: true }));
+    // 5. Auto-login
+    localStorage.setItem(
+      "userSession",
+      JSON.stringify({ email, loggedIn: true })
+    );
+
     return { success: true, message: "Registration successful" };
   } catch (error) {
-    return { success: false, message: "An error occurred during registration" };
+    console.error("Signup error:", error);
+    return { success: false, message: "Signup failed" };
   }
 }
 
+// ------------------ SESSION HELPERS ------------------
 export function signOut() {
   localStorage.removeItem("userSession");
 }
@@ -67,8 +91,7 @@ export function isAuthenticated() {
   const session = localStorage.getItem("userSession");
   if (!session) return false;
   try {
-    const parsed = JSON.parse(session);
-    return parsed.loggedIn === true;
+    return JSON.parse(session).loggedIn === true;
   } catch {
     return false;
   }
