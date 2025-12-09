@@ -37,7 +37,7 @@ export default function SignupPage() {
 
     if (result.success) {
       toast.success(result.message);
-      setTimeout(() => router.push("/"), 1000);
+      setTimeout(() => router.push("/dashboard"), 1000);
     } else {
       toast.error(result.message);
     }
