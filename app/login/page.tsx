@@ -1,5 +1,6 @@
 "use client";
-import { useState, FormEvent } from "react";
+
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth";
 import toast, { Toaster } from "react-hot-toast";
@@ -7,28 +8,52 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import "./login.css";
 
+interface SignInResponse {
+  success: boolean;
+  message?: string;
+  admin?: boolean;
+}
+
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  async function handleSubmit(e: FormEvent) {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
     setLoading(true);
 
-    const result = await signIn(email, password);
+    try {
+      const res: SignInResponse = await signIn(email, password);
 
-    if (result.success) {
-      toast.success(result.message);
-      setTimeout(() => router.push("/dashboard"), 1000);
-    } else {
-      toast.error(result.message);
+      if (!res.success) {
+        setErrorMsg(res.message || "Login failed");
+        toast.error(res.message || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      // toast.success("Signed in successfully");
+
+      // Redirect based on admin status from Supabase
+      setTimeout(() => {
+        if (res.admin === true) {
+          router.push("/admin_dashboard");
+        } else {
+          router.push("/dashboard");
+        }
+      }, 1000);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Login failed";
+      setErrorMsg(errorMessage);
+      toast.error(errorMessage);
+      setLoading(false);
     }
-
-    setLoading(false);
-  }
+  };
 
   return (
     <>
@@ -40,15 +65,15 @@ export default function LoginPage() {
             <p>Sign in to Meta-black Management</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="login-form">
+          <form onSubmit={handleLogin} className="login-form">
             <div className="form-group">
               <label>Email</label>
               <input
                 type="email"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="Enter your email"
               />
             </div>
 
@@ -57,10 +82,10 @@ export default function LoginPage() {
               <div className="password-container">
                 <input
                   type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
@@ -75,6 +100,8 @@ export default function LoginPage() {
             <button type="submit" className="login-button" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </button>
+
+            {errorMsg && <p style={{ color: "red", marginTop: "12px", textAlign: "center" }}>{errorMsg}</p>}
 
             <p className="signup-link">
               Don't have an account?{" "}

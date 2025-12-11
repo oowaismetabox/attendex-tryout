@@ -10,15 +10,15 @@
 // import Image from 'next/image';
 // import logo from '@/public/image/logo.svg';
 
-// const AttendancePage = lazy(() => import('@/app/attendance/page'));
+// const SuperuserPage = lazy(() => import('@/app/superuser/page'));
 // const UsermapPage = lazy(() => import('@/app/usermap/page'));
 
 // export default function Home() {
 //   const router = useRouter();
-//   const [currentPage, setCurrentPage] = useState('attendance');
-
+//   const [currentPage, setCurrentPage] = useState('superuser');
 //   const [isClient, setIsClient] = useState(false);
 //   const [currentUser, setCurrentUser] = useState<any>(null);
+//   const [pageLoaded, setPageLoaded] = useState(false);
 
 //   // Check authentication and load last opened page (only on client side)
 //   useEffect(() => {
@@ -29,13 +29,8 @@
 
 //     setIsClient(true);
 //     setCurrentUser(getCurrentUser());
-
-//     const savedPage = localStorage.getItem('currentPage');
-//     if (savedPage) {
-//       setCurrentPage(savedPage);
-//     } else {
-//       setCurrentPage('attendance');
-//     }
+//     setCurrentPage('superuser');
+//     setPageLoaded(true);
 //   }, [router]);
 
 //   // Save the clicked page
@@ -63,7 +58,7 @@
 //   }
 
 //   // Don't render until client is ready and authenticated
-//   if (!isClient || !currentUser) {
+//   if (!isClient || !currentUser || !pageLoaded) {
 //     return null;
 //   }
 
@@ -74,15 +69,17 @@
 //       {/* Sidebar */}
 //       <aside className="sidebar">
 //         <div className="logoSection">
+          
 //           <Image src={logo} alt="Logo" fill style={{ objectFit: 'contain' }} />
 //         </div>
 
 //         <div className="divider"></div>
-
+        
 //         <nav className="navMenu">
+//           <div className="adminpage">ADMIN PAGE</div>
 //           <button
-//             onClick={() => handlePageChange('attendance')}
-//             className={`navItem ${currentPage === 'attendance' ? 'active' : ''}`}
+//             onClick={() => handlePageChange('superuser')}
+//             className={`navItem ${currentPage === 'superuser' ? 'active' : ''}`}
 //           >
 //             <span className="icon">📋</span>
 //             <span className="label">Attendance Log</span>
@@ -93,7 +90,7 @@
 //             className={`navItem ${currentPage === 'usermap' ? 'active' : ''}`}
 //           >
 //             <span className="icon">👤</span>
-//             <span className="label">User Map</span>
+//             <span>User Map</span>
 //           </button>
 //         </nav>
 
@@ -102,7 +99,7 @@
 //         <div className="userSection">
 //           <p className="userEmail">{currentUser.email}</p>
 //           <button className="signOutBtn" onClick={handleSignOut}>
-//             <span>Sign Out</span>
+//             Sign Out
 //           </button>
 //         </div>
 //       </aside>
@@ -110,9 +107,9 @@
 //       {/* Main Content */}
 //       <main className="mainContent">
 //         <div className="pageContainer">
-//           {currentPage === 'attendance' && (
+//           {currentPage === 'superuser' && (
 //             <Suspense fallback={<div className="loadingState">Loading...</div>}>
-//               <AttendancePage />
+//               <SuperuserPage />
 //             </Suspense>
 //           )}
 //           {currentPage === 'usermap' && (
@@ -124,7 +121,10 @@
 //       </main>
 //     </div>
 //   );
-// }'use client';
+// }
+
+
+'use client';
 
 import { signOut, getCurrentUser, isAuthenticated } from "@/lib/auth";
 import toast, { Toaster } from "react-hot-toast";
@@ -136,15 +136,15 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import logo from '@/public/image/logo.svg';
 
-const AttendancePage = lazy(() => import('@/app/attendance/page'));
+const SuperuserPage = lazy(() => import('@/app/superuser/page'));
 const UsermapPage = lazy(() => import('@/app/usermap/page'));
 
 export default function Home() {
   const router = useRouter();
-  const [currentPage, setCurrentPage] = useState('attendance');
-
+  const [currentPage, setCurrentPage] = useState('superuser');
   const [isClient, setIsClient] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [pageLoaded, setPageLoaded] = useState(false);
 
   // Check authentication and load last opened page (only on client side)
   useEffect(() => {
@@ -155,8 +155,9 @@ export default function Home() {
 
     setIsClient(true);
     setCurrentUser(getCurrentUser());
-    // Hardcode to 'attendance' by default
-    setCurrentPage('attendance');
+    // Hardcode to 'superuser' (Attendance Log) by default
+    setCurrentPage('superuser');
+    setPageLoaded(true);
   }, [router]);
 
   // Save the clicked page
@@ -184,7 +185,7 @@ export default function Home() {
   }
 
   // Don't render until client is ready and authenticated
-  if (!isClient || !currentUser) {
+  if (!isClient || !currentUser || !pageLoaded) {
     return null;
   }
 
@@ -195,15 +196,17 @@ export default function Home() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="logoSection">
+          
           <Image src={logo} alt="Logo" fill style={{ objectFit: 'contain' }} />
         </div>
 
         <div className="divider"></div>
-
+        
         <nav className="navMenu">
+          <div className="adminpage">ADMIN PAGE</div>
           <button
-            onClick={() => handlePageChange('attendance')}
-            className={`navItem ${currentPage === 'attendance' ? 'active' : ''}`}
+            onClick={() => handlePageChange('superuser')}
+            className={`navItem ${currentPage === 'superuser' ? 'active' : ''}`}
           >
             <span className="icon">📋</span>
             <span className="label">Attendance Log</span>
@@ -214,7 +217,7 @@ export default function Home() {
             className={`navItem ${currentPage === 'usermap' ? 'active' : ''}`}
           >
             <span className="icon">👤</span>
-            <span className="label">User Map</span>
+            <span>User Map</span>
           </button>
         </nav>
 
@@ -223,7 +226,7 @@ export default function Home() {
         <div className="userSection">
           <p className="userEmail">{currentUser.email}</p>
           <button className="signOutBtn" onClick={handleSignOut}>
-            <span>Sign Out</span>
+            Sign Out
           </button>
         </div>
       </aside>
@@ -231,9 +234,9 @@ export default function Home() {
       {/* Main Content */}
       <main className="mainContent">
         <div className="pageContainer">
-          {currentPage === 'attendance' && (
+          {currentPage === 'superuser' && (
             <Suspense fallback={<div className="loadingState">Loading...</div>}>
-              <AttendancePage />
+              <SuperuserPage />
             </Suspense>
           )}
           {currentPage === 'usermap' && (

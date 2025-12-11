@@ -43,7 +43,7 @@ useEffect(() => {
     const hasReloaded = sessionStorage.getItem("has-reloaded");
     if (!hasReloaded) {
       sessionStorage.setItem("has-reloaded", "true");
-      window.location.reload();
+      // window.location.reload();
     }
   }
 }, [router]);
@@ -74,23 +74,23 @@ useEffect(() => {
     );
   }, [searchQuery, people]);
 
-  // ---------------- Sign Out ----------------
-  async function handleSignOut() {
-    const confirm = await Swal.fire({
-      title: "Sign Out?",
-      text: "Are you sure you want to sign out?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Yes, sign out",
-      confirmButtonColor: "#dc2626",
-    });
+  // // ---------------- Sign Out ----------------
+  // async function handleSignOut() {
+  //   const confirm = await Swal.fire({
+  //     title: "Sign Out?",
+  //     text: "Are you sure you want to sign out?",
+  //     icon: "question",
+  //     showCancelButton: true,
+  //     confirmButtonText: "Yes, sign out",
+  //     confirmButtonColor: "#dc2626",
+  //   });
 
-    if (confirm.isConfirmed) {
-      signOut();
-      toast.success("Signed out successfully");
-      setTimeout(() => router.push("/login"), 1000);
-    }
-  }
+  //   if (confirm.isConfirmed) {
+  //     signOut();
+  //     toast.success("Signed out successfully");
+  //     setTimeout(() => router.push("/login"), 1000);
+  //   }
+  // }
 
   // ---------------- Form Submit (Add / Update) ----------------
   async function handleFormSubmit(e: FormEvent) {
@@ -222,25 +222,12 @@ useEffect(() => {
               <div className="card">
                 <div className="card-header">
                   <div>
-                    <h4>Meta-black Management</h4>
+                    <h4>User Mappings</h4>
                     <p style={{ fontSize: "12px", color: "#718096", marginTop: "4px" }}>
-                      Logged in as: {currentUser.email}
+                      Metabox and Blackbox
                     </p>
                   </div>
-                  <button
-                    className="btn-delete"
-                    onClick={handleSignOut}
-                    style={{ marginLeft: "auto" }}
-                  >
-                    Sign Out
-                  </button>
-                  <button
-                    className="btn-back"
-                    onClick={() => router.push("/dashboard")}
-                    style={{ marginLeft: "auto" }}
-                  >
-                    Go Back
-                  </button>
+                  
                 </div>
                 <div className="card-body">
                   <div className="form-group">

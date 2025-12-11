@@ -18,14 +18,15 @@ export async function signIn(email: string, password: string) {
     // Save session
     localStorage.setItem(
       "userSession",
-      JSON.stringify({ email, loggedIn: true })
+      JSON.stringify({ email, loggedIn: true, admin: data.admin })
     );
 
-    return { success: true, message: "Login successful" };
+    return { success: true, admin: data.admin };
   } catch (error) {
     return { success: false, message: "Login error occurred" };
   }
 }
+
 
 // ------------------ SIGNUP ------------------
 export async function signUp(email: string, password: string, accessCode: string) {
@@ -67,7 +68,7 @@ export async function signUp(email: string, password: string, accessCode: string
     // 4. Insert user
     const { error } = await supabase
       .from("allowedpeople")
-      .insert({ email, password });
+      .insert({ email, password,admin:false });
 
     if (error) {
       return { success: false, message: "Registration failed" };

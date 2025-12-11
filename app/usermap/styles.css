@@ -61,8 +61,8 @@ body {
   background: linear-gradient(135deg, #5fb3a1 0%, #4a9d8e 100%);
   color: white;
   padding: 15px 20px;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  /* border-top-left-radius: 8px;
+  border-top-right-radius: 8px; */
   display: flex;
   justify-content: space-between;
   align-items: center;

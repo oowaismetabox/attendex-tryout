@@ -1,0 +1,337 @@
+/* ============================================
+   LAYOUT - MAIN CONTAINER
+   ============================================ */
+.layoutContainer {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ============================================
+   SIDEBAR - NAVIGATION
+   ============================================ */
+.sidebar {
+  width: 280px;
+  background-color: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  overflow-y: auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+}
+
+/* Logo Section */
+.logoSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  height: 70px;
+  position: relative;
+  width: auto;
+  max-width: 200px;
+
+  margin: -10px 0 0 10px;
+}
+
+.logoSection img {
+  width: 100%;
+  height: auto;       /* Keep aspect ratio */
+  max-width: 100%;    /* Prevent overflow */
+  object-fit: contain;
+}
+@media (max-width: 600px) {
+  .logoSection {
+    max-width: 140px;
+    height: 60px;
+  }
+}
+
+
+/* Navigation Menu */
+.navMenu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 12px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px;
+  margin: 4px 0;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #495057;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.navItem:hover {
+  background-color: #e8f4f8;
+  color: #00a8cc;
+}
+
+.navItem.active {
+  background-color: #cff0f5;
+  color: #00a8cc;
+  border-left: 3px solid #00a8cc;
+  padding-left: 9px;
+}
+
+.icon {
+  font-size: 18px;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Divider */
+.divider {
+  border-top: 1px solid #e9ecef;
+  margin: 16px 0;
+}
+
+/* User Section */
+.userSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 12px;
+  border-top: 1px solid #e9ecef;
+  padding-top: 16px;
+  margin-top: 0;
+}
+
+.userEmail {
+  font-size: 12px;
+  color: #6c757d;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 12px;
+  text-align: center;
+}
+
+.signOutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.signOutBtn:hover {
+  background-color: #c0392b;
+}
+
+.signOutBtn:active {
+  transform: scale(0.98);
+}
+
+/* ============================================
+   MAIN CONTENT AREA
+   ============================================ */
+.mainContent {
+  flex: 1;
+  margin-left: 280px;
+  padding: 0;
+  background-color: #ffffff;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.pageContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  color: #adb5bd;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Loading State */
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  color: #6c757d;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - TABLET
+   ============================================ */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 240px;
+  }
+
+  .mainContent {
+    margin-left: 240px;
+  }
+
+  .logoSection {
+    height: 70px;
+    margin-bottom: 20px;
+  }
+
+  .navItem {
+    padding: 10px 10px;
+    gap: 10px;
+  }
+
+  .label {
+    font-size: 13px;
+  }
+
+  .icon {
+    font-size: 16px;
+    width: 18px;
+  }
+
+  .userEmail {
+    font-size: 11px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - MOBILE
+   ============================================ */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 200px;
+    padding: 16px 0;
+  }
+
+  .mainContent {
+    margin-left: 200px;
+  }
+
+  .logoSection {
+    height: 60px;
+    margin-bottom: 16px;
+    padding: 0 16px;
+  }
+
+  .navMenu {
+    padding: 0 8px;
+  }
+
+  .navItem {
+    padding: 10px 8px;
+    gap: 8px;
+    margin: 2px 0;
+  }
+
+  .icon {
+    font-size: 16px;
+    width: 16px;
+  }
+
+  .label {
+    font-size: 12px;
+  }
+
+  .userSection {
+    padding: 0 8px;
+    padding-top: 12px;
+    gap: 10px;
+  }
+
+  .userEmail {
+    font-size: 10px;
+    padding: 0 8px;
+  }
+
+  .signOutBtn {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+/* ============================================
+   SCROLLBAR STYLING (Optional)
+   ============================================ */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+.mainContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mainContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mainContent::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 4px;
+}
+
+.mainContent::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}

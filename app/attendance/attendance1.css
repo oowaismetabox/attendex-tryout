@@ -56,18 +56,21 @@
 /* Card Styles */
 .card {
   background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* border-radius: 12px; */
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
   overflow: hidden;
 }
 
 .card-header {
-  padding: 20px 24px;
-  background-color: #5daf8f;
-  color: white;
-  border-bottom: none;
-  flex-shrink: 0;
-}
+    color: #fff;
+    background: linear-gradient(135deg, #5fb3a1 0%, #4a9d8e 100%);
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    display: flex;
+    border : 0px;
+} 
+
 
 .card-header h4,
 .card-header h5 {
@@ -112,8 +115,8 @@
 .form-group textarea {
   width: 100%;
   padding: 12px 14px;
-  border: 2px solid #d1d5db;
-  border-radius: 8px;
+  /* border: 2px solid #d1d5db;
+  border-radius: 8px; */
   font-size: 14px;
   transition: all 0.2s;
 }
@@ -123,14 +126,13 @@
 .form-group textarea:focus {
   outline: none;
   border-color: #5daf8f;
-  box-shadow: 0 0 0 3px rgba(93, 175, 143, 0.2);
+  box-shadow: 0 0 0 3px rgba(93, 175, 143, 0.2); 
 }
 
 /* Enhanced Search and Actions Section */
 .card-header.flex-between:last-of-type {
   padding-top: 16px;
-  background: linear-gradient(135deg, #5daf8f 0%, #4a9276 100%);
-}
+  background: linear-gradient(135deg, #5daf8f 0%, #4a9276 100%); }
 
 .search-actions {
   display: flex;
@@ -314,29 +316,6 @@
   transform: translateY(0);
 }
 
-.btn-back {
-  padding: 12px 18px;
-  background-color: #14b8a6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn-back:hover {
-  background-color: #0d9488;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-}
-
-.btn-back:active {
-  background-color: #0f766e;
-  transform: translateY(0);
-}
 
 .btn-edit {
   padding: 8px 16px;

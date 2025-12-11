@@ -7,27 +7,22 @@ import { signOut, getCurrentUser, isAuthenticated } from "@/lib/auth";
 import toast, { Toaster } from "react-hot-toast";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
-// import './attendance.css';
-    
+import './attendance.css';
+
 interface Record {
   id: number;
-  user_id: number;
-  timestamp: string;
-  device_ip: string;
+  user_id: number | null;
+  timestamp: string | null;
+  device_ip: string | null;
   synced_to_zoho: boolean;
   synced_at: string | null;
   zoho_sync_error: string | null;
-  check_type: number; // Changed to number (0 or 1)
+  check_type: string | null;
   synthetic: boolean;
   paired_with: number | null;
 }
 
 const RECORDS_PER_PAGE = 50;
-
-// Helper function to display check type
-const getCheckTypeLabel = (type: number) => {
-  return type === 0 ? "Check In" : type === 1 ? "Check Out" : "Unknown";
-};
 
 export default function SyntheticRecordsPage() {
   const router = useRouter();
@@ -38,39 +33,29 @@ export default function SyntheticRecordsPage() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [editingRecord, setEditingRecord] = useState<Record | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<Record>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Form state for all editable fields
-  const [editUserId, setEditUserId] = useState<number>(0);
-  const [editTimestamp, setEditTimestamp] = useState("");
-  const [editDeviceIp, setEditDeviceIp] = useState("");
-  const [editCheckType, setEditCheckType] = useState<number>(0);
-  const [editSynthetic, setEditSynthetic] = useState(false);
-  const [editSyncedToZoho, setEditSyncedToZoho] = useState(false);
-  const [editSyncedAt, setEditSyncedAt] = useState("");
-  const [editZohoSyncError, setEditZohoSyncError] = useState("");
-  const [editPairedWith, setEditPairedWith] = useState<number | null>(null);
 
-useEffect(() => {
-  if (!isAuthenticated()) {
-    router.push("/login");
-  } else {
-    setCurrentUser(getCurrentUser());
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/login");
+    } else {
+      setCurrentUser(getCurrentUser());
 
-    const hasReloaded = sessionStorage.getItem("has-reloaded");
-    if (!hasReloaded) {
-      sessionStorage.setItem("has-reloaded", "true");
-      window.location.reload();
+      const hasReloaded = sessionStorage.getItem("has-reloaded");
+      if (!hasReloaded) {
+        sessionStorage.setItem("has-reloaded", "true");
+      }
     }
-  }
-}, [router]);
-useEffect(() => {
-  return () => {
-    sessionStorage.removeItem("has-reloaded");
-  };
-}, [router]);
+  }, [router]);
+
+  useEffect(() => {
+    return () => {
+      sessionStorage.removeItem("has-reloaded");
+    };
+  }, []);
 
   // ---------------- Fetch Records with Pagination ----------------
   async function fetchRecords(page: number = 1, append: boolean = false) {
@@ -81,7 +66,7 @@ useEffect(() => {
     const { data, error, count } = await supabase
       .from("attendance")
       .select("*", { count: 'exact' })
-      .order("id", { ascending: true })
+      .order("timestamp", { ascending: false })
       .range(from, to);
 
     if (error) {
@@ -96,7 +81,6 @@ useEffect(() => {
       setRecords(data || []);
     }
 
-    // Check if there are more records
     const totalRecords = count || 0;
     setHasMore(totalRecords > page * RECORDS_PER_PAGE);
     setIsLoading(false);
@@ -117,15 +101,14 @@ useEffect(() => {
   useEffect(() => {
     const query = searchQuery.toLowerCase();
     const filtered = records.filter((record) => {
-      const checkTypeLabel = getCheckTypeLabel(record.check_type).toLowerCase();
+      const checkType = typeof record.check_type === 'string' ? record.check_type.toLowerCase() : '';
       const deviceIp = typeof record.device_ip === 'string' ? record.device_ip.toLowerCase() : '';
 
       return (
         record.id.toString().includes(query) ||
-        record.user_id.toString().includes(query) ||
+        (record.user_id?.toString().includes(query) ?? false) ||
         deviceIp.includes(query) ||
-        checkTypeLabel.includes(query) ||
-        record.check_type.toString().includes(query)
+        checkType.includes(query)
       );
     });
     setFilteredRecords(filtered);
@@ -133,7 +116,6 @@ useEffect(() => {
 
   // ---------------- Paginate Filtered Records ----------------
   useEffect(() => {
-    // If searching, show all filtered results, otherwise respect pagination
     if (searchQuery) {
       setDisplayedRecords(filteredRecords);
     } else {
@@ -141,63 +123,31 @@ useEffect(() => {
     }
   }, [filteredRecords, searchQuery]);
 
-  // ---------------- Sign Out ----------------
-  async function handleSignOut() {
-    const confirm = await Swal.fire({
-      title: "Sign Out?",
-      text: "Are you sure you want to sign out?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Yes, sign out",
-      confirmButtonColor: "#dc2626",
-    });
-
-    if (confirm.isConfirmed) {
-      signOut();
-      toast.success("Signed out successfully");
-      setTimeout(() => router.push("/login"), 1000);
-    }
-  }
-
-  // ---------------- Form Submit (Update All Fields) ----------------
+  // ---------------- Form Submit (Update All Attributes Except ID) ----------------
   async function handleFormSubmit(e: FormEvent) {
     e.preventDefault();
     if (!editingRecord) return;
 
-    if (!editTimestamp || editTimestamp.trim() === "") {
-      toast.error("Timestamp is required");
-      return;
+    // Validate check_type if provided (must be 0 or 1)
+    if (editFormData.check_type !== null && editFormData.check_type !== undefined && editFormData.check_type !== "") {
+      const checkTypeNum = parseInt(editFormData.check_type as string);
+      if (isNaN(checkTypeNum) || (checkTypeNum !== 0 && checkTypeNum !== 1)) {
+        toast.error("Check Type must be 0 or 1");
+        return;
+      }
     }
 
-    if (!editUserId || editUserId <= 0) {
-      toast.error("Valid User ID is required");
-      return;
-    }
-
-    if (!editDeviceIp || editDeviceIp.trim() === "") {
-      toast.error("Device IP is required");
-      return;
-    }
-
-    if (editCheckType === null || editCheckType === undefined || (editCheckType !== 0 && editCheckType !== 1)) {
-      toast.error("Check Type must be 0 (Check In) or 1 (Check Out)");
-      return;
-    }
-
-    // Prepare update object
-    const updateData: any = {
-      user_id: editUserId,
-      timestamp: editTimestamp,
-      device_ip: editDeviceIp,
-      check_type: editCheckType,
-      synthetic: editSynthetic,
-      synced_to_zoho: editSyncedToZoho,
-      synced_at: editSyncedAt || null,
-      zoho_sync_error: editZohoSyncError || null,
-      paired_with: editPairedWith,
+    // Prepare update data (exclude ID, allow null values)
+    const updateData = {
+      user_id: editFormData.user_id || null,
+      timestamp: editFormData.timestamp || null,
+      device_ip: editFormData.device_ip || null,
+      check_type: editFormData.check_type || null,
+      synthetic: editFormData.synthetic ?? false,
+      paired_with: editFormData.paired_with || null,
+      synced_to_zoho: editFormData.synced_to_zoho ?? false,
     };
 
-    // Update the record
     const { error: updateError } = await supabase
       .from("attendance")
       .update(updateData)
@@ -208,59 +158,39 @@ useEffect(() => {
       return;
     }
 
+    const updatedRecord: Record = {
+      ...editingRecord,
+      ...updateData,
+    };
+
+    setRecords((prev) =>
+      prev.map((r) => (r.id === editingRecord.id ? updatedRecord : r))
+    );
+
     toast.success("Record updated successfully");
     handleCancelEdit();
-    // Refresh records from beginning
-    setCurrentPage(1);
-    fetchRecords(1, false);
   }
 
-  // ---------------- Edit (all rows allowed) ----------------
+  // ---------------- Edit (All Rows, All Attributes Except ID) ----------------
   function handleRecordEdit(record: Record, e: React.MouseEvent) {
     e.stopPropagation();
 
     setEditingRecord(record);
-    
-    // Set all form fields
-    setEditUserId(record.user_id);
-    setEditDeviceIp(record.device_ip);
-    setEditCheckType(record.check_type);
-    setEditSynthetic(record.synthetic);
-    setEditSyncedToZoho(record.synced_to_zoho);
-    setEditZohoSyncError(record.zoho_sync_error || "");
-    setEditPairedWith(record.paired_with);
-    
-    // Convert timestamp to datetime-local format
-    const date = new Date(record.timestamp);
-    const localDateTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16);
-    setEditTimestamp(localDateTime);
-
-    // Convert synced_at to datetime-local format if exists
-    if (record.synced_at) {
-      const syncedDate = new Date(record.synced_at);
-      const syncedLocalDateTime = new Date(syncedDate.getTime() - syncedDate.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16);
-      setEditSyncedAt(syncedLocalDateTime);
-    } else {
-      setEditSyncedAt("");
-    }
+    setEditFormData({
+      user_id: record.user_id || undefined,
+      timestamp: record.timestamp ? new Date(record.timestamp).toISOString().slice(0, 16) : "",
+      device_ip: record.device_ip || "",
+      check_type: record.check_type || "",
+      synthetic: record.synthetic,
+      paired_with: record.paired_with || undefined,
+      synced_to_zoho: record.synced_to_zoho,
+    });
   }
 
   // ---------------- Cancel Edit ----------------
   function handleCancelEdit() {
     setEditingRecord(null);
-    setEditUserId(0);
-    setEditTimestamp("");
-    setEditDeviceIp("");
-    setEditCheckType(0);
-    setEditSynthetic(false);
-    setEditSyncedToZoho(false);
-    setEditSyncedAt("");
-    setEditZohoSyncError("");
-    setEditPairedWith(null);
+    setEditFormData({});
   }
 
   // ---------------- Delete Selected ----------------
@@ -288,8 +218,7 @@ useEffect(() => {
       else toast.success(`Deleted ${selectedIds.length} record(s)`);
 
       setSelectedIds([]);
-      setCurrentPage(1);
-      fetchRecords(1, false);
+      setRecords((prev) => prev.filter((r) => !selectedIds.includes(r.id)));
     }
   }
 
@@ -306,7 +235,6 @@ useEffect(() => {
     else setSelectedIds(displayedRecords.map((r) => r.id));
   }
 
-  // Don't render until authentication is checked
   if (!currentUser) {
     return null;
   }
@@ -317,14 +245,13 @@ useEffect(() => {
       <div className="app-container">
         <div className="content-wrapper">
           <div className="flex-layout">
-            {/* Left side form - Only shown when editing */}
             {editingRecord && (
               <div className="form-section">
                 <div className="card">
                   <div className="card-header">
                     <div>
                       <h4>Edit Record</h4>
-                      <p style={{ fontSize: "12px", color: "#718096", marginTop: "4px" }}>
+                      <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.9)", marginTop: "4px" }}>
                         Editing record ID: {editingRecord.id}
                       </p>
                     </div>
@@ -341,104 +268,87 @@ useEffect(() => {
                     </div>
 
                     <div className="form-group">
-                      <label>User ID *</label>
+                      <label>User ID (Optional)</label>
                       <input
                         type="number"
-                        value={editUserId}
-                        onChange={(e) => setEditUserId(Number(e.target.value))}
-                        required
+                        value={editFormData.user_id ?? ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, user_id: e.target.value ? parseInt(e.target.value) : null })}
+                        placeholder="Leave empty for null"
+                        style={{ borderColor: "#3b82f6", borderWidth: "2px" }}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Timestamp *</label>
+                      <label>Timestamp (Optional)</label>
                       <input
                         type="datetime-local"
-                        value={editTimestamp}
-                        onChange={(e) => setEditTimestamp(e.target.value)}
-                        required
+                        value={editFormData.timestamp ?? ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, timestamp: e.target.value || null })}
+                        style={{ borderColor: "#3b82f6", borderWidth: "2px" }}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Device IP *</label>
+                      <label>Device IP (Optional)</label>
                       <input
                         type="text"
-                        value={editDeviceIp}
-                        onChange={(e) => setEditDeviceIp(e.target.value)}
-                        placeholder="e.g., 192.168.1.1"
-                        required
+                        value={editFormData.device_ip ?? ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, device_ip: e.target.value || null })}
+                        placeholder="Leave empty for null"
+                        style={{ borderColor: "#3b82f6", borderWidth: "2px" }}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Check Type *</label>
+                      <label>Check Type (Optional - 0 or 1)</label>
+                      <input
+                        type="number"
+                        value={editFormData.check_type ?? ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, check_type: e.target.value || null })}
+                        min="0"
+                        max="1"
+                        placeholder="Leave empty for null"
+                        style={{ borderColor: "#3b82f6", borderWidth: "2px" }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Synthetic (Optional)</label>
                       <select
-                        value={editCheckType}
-                        onChange={(e) => setEditCheckType(Number(e.target.value))}
-                        required
+                        value={editFormData.synthetic ? "yes" : "no"}
+                        onChange={(e) => setEditFormData({ ...editFormData, synthetic: e.target.value === "yes" })}
+                        style={{ borderColor: "#3b82f6", borderWidth: "2px" }}
                       >
-                        <option value={0}>0 - Check In</option>
-                        <option value={1}>1 - Check Out</option>
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
                       </select>
                     </div>
 
                     <div className="form-group">
-                      <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <input
-                          type="checkbox"
-                          checked={editSynthetic}
-                          onChange={(e) => setEditSynthetic(e.target.checked)}
-                          style={{ width: "auto", margin: 0 }}
-                        />
-                        Synthetic Record
-                      </label>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Paired With (ID)</label>
+                      <label>Paired With (Optional)</label>
                       <input
                         type="number"
-                        value={editPairedWith ?? ""}
-                        onChange={(e) => setEditPairedWith(e.target.value ? Number(e.target.value) : null)}
-                        placeholder="Enter record ID or leave empty"
+                        value={editFormData.paired_with ?? ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, paired_with: e.target.value ? parseInt(e.target.value) : null })}
+                        placeholder="Leave empty for null"
+                        style={{ borderColor: "#3b82f6", borderWidth: "2px" }}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <input
-                          type="checkbox"
-                          checked={editSyncedToZoho}
-                          onChange={(e) => setEditSyncedToZoho(e.target.checked)}
-                          style={{ width: "auto", margin: 0 }}
-                        />
-                        Synced to Zoho
-                      </label>
+                      <label>Synced to Zoho (Optional)</label>
+                      <select
+                        value={editFormData.synced_to_zoho ? "yes" : "no"}
+                        onChange={(e) => setEditFormData({ ...editFormData, synced_to_zoho: e.target.value === "yes" })}
+                        style={{ borderColor: "#3b82f6", borderWidth: "2px" }}
+                      >
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                      </select>
                     </div>
 
-                    <div className="form-group">
-                      <label>Synced At</label>
-                      <input
-                        type="datetime-local"
-                        value={editSyncedAt}
-                        onChange={(e) => setEditSyncedAt(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Zoho Sync Error</label>
-                      <textarea
-                        value={editZohoSyncError}
-                        onChange={(e) => setEditZohoSyncError(e.target.value)}
-                        rows={3}
-                        placeholder="Error message (if any)"
-                        style={{ resize: "vertical", fontFamily: "inherit" }}
-                      />
-                    </div>
-
-                    <div style={{ padding: "12px", backgroundColor: "#dbeafe", borderRadius: "6px", marginBottom: "16px", fontSize: "13px", color: "#1e40af" }}>
-                      <strong>Note:</strong> All fields marked with * are required.
+                    <div style={{ padding: "12px", backgroundColor: "#fef3c7", borderRadius: "6px", marginBottom: "16px", fontSize: "13px", color: "#92400e" }}>
+                      <strong>Note:</strong> All fields except ID are optional and can be null. Check Type must be 0 or 1 if provided.
                     </div>
 
                     <div style={{ display: "flex", gap: "8px" }}>
@@ -462,40 +372,37 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Right side table */}
             <div className="table-section" style={{ flex: editingRecord ? "1" : "1" }}>
               <div className="card">
                 <div className="card-header flex-between">
                   <div>
                     <h5>Records List</h5>
-                    <p style={{ fontSize: "12px", color: "#718096", marginTop: "4px" }}>
-                      Logged in as: {currentUser.email} | Showing {displayedRecords.length} of {records.length} loaded records
+                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.9)", marginTop: "4px" }}>
+                      Showing {displayedRecords.length} of {records.length} loaded records
                     </p>
                   </div>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <button className="btn-back" onClick={() => router.push("/dashboard")}>
-                      Go Back
-                    </button>
-                    <button className="btn-delete" onClick={handleSignOut}>
-                      Sign Out
-                    </button>
-                  </div>
                 </div>
+
                 <div className="card-header flex-between" style={{ paddingTop: 0 }}>
                   <div className="search-actions" style={{ width: "100%", justifyContent: "space-between" }}>
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                    <div className="search-container">
+                      <input
+                        type="text"
+                        placeholder="Search by ID, User ID, Device IP, or Check Type..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                      <span className="search-icon">🔍</span>
+                    </div>
                     {selectedIds.length > 0 && (
-                      <button className="btn-delete" onClick={handleDeleteSelected}>
-                        Delete Selected ({selectedIds.length})
+                      <button className="btn-delete with-badge" onClick={handleDeleteSelected}>
+                        <span>🗑️ Delete Selected</span>
+                        <span className="delete-badge">{selectedIds.length}</span>
                       </button>
                     )}
                   </div>
                 </div>
+
                 <div className="table-wrapper">
                   <table>
                     <thead>
@@ -536,14 +443,10 @@ useEffect(() => {
                             />
                           </td>
                           <td>{record.id}</td>
-                          <td>{record.user_id}</td>
-                          <td>{new Date(record.timestamp).toLocaleString()}</td>
-                          <td>{record.device_ip}</td>
-                          <td>
-                            <span style={{ fontWeight: "600", color: "#2d5f4d" }}>
-                              {record.check_type} - {getCheckTypeLabel(record.check_type)}
-                            </span>
-                          </td>
+                          <td>{record.user_id ?? '-'}</td>
+                          <td>{record.timestamp ? new Date(record.timestamp).toLocaleString() : '-'}</td>
+                          <td>{record.device_ip ?? '-'}</td>
+                          <td>{record.check_type ?? '-'}</td>
                           <td>
                             <span style={{ color: record.synthetic ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>
                               {record.synthetic ? '✓' : '✗'}
@@ -554,7 +457,7 @@ useEffect(() => {
                               {record.synced_to_zoho ? '✓' : '✗'}
                             </span>
                           </td>
-                          <td>{record.paired_with || '-'}</td>
+                          <td>{record.paired_with ?? '-'}</td>
                           <td>
                             <button
                               className="btn-edit"
@@ -571,15 +474,14 @@ useEffect(() => {
                     <div className="no-records">No records found</div>
                   )}
                 </div>
-                
-                {/* Load More Button */}
+
                 {!searchQuery && hasMore && (
                   <div style={{ padding: "16px", textAlign: "center", borderTop: "1px solid #e5e7eb" }}>
                     <button
                       className="btn-primary"
                       onClick={handleLoadMore}
                       disabled={isLoading}
-                      style={{ 
+                      style={{
                         minWidth: "200px",
                         opacity: isLoading ? 0.6 : 1,
                         cursor: isLoading ? "not-allowed" : "pointer"
@@ -589,7 +491,7 @@ useEffect(() => {
                     </button>
                   </div>
                 )}
-                
+
                 {!searchQuery && !hasMore && records.length > 0 && (
                   <div style={{ padding: "16px", textAlign: "center", borderTop: "1px solid #e5e7eb", color: "#718096", fontSize: "14px" }}>
                     All records loaded
