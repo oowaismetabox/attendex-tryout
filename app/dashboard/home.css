@@ -43,6 +43,7 @@
   height: auto;       /* Keep aspect ratio */
   max-width: 100%;    /* Prevent overflow */
   object-fit: contain;
+  margin-left: 5px;
 }
 @media (max-width: 600px) {
   .logoSection {
