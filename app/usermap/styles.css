@@ -229,23 +229,28 @@ input[type="checkbox"] {
   justify-content: space-between;
   align-items: center;
 }
+
 .search-actions {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 .search-actions input {
-  width: 250px;
+  width: 200px;
+  min-width: 150px;
   padding: 6px 12px;
   border: 1px solid #ced4da;
   border-radius: 4px;
   font-size: 14px;
+  flex-shrink: 1;
 }
-.search-actions input:focus {
+/* .search-actions input:focus {
   outline: none;
   border-color: #5fb3a1;
   box-shadow: 0 0 0 2px rgba(95, 179, 161, 0.2);
-}
+} */
 .no-records {
   text-align: center;
   padding: 40px;
